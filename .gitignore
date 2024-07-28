@@ -1,0 +1,6 @@
+SQLite db/*
+PyWhatKit_DB.txt
+templates/member_profile/image.jpeg
+templates/member_qrcodes/*
+__pycache__
+User_Data

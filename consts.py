@@ -1,0 +1,8 @@
+FULL_WEEK = "Full-Week"
+HALF_WEEK = "Half-Week"
+NO_CARDIO = "No-Cardio"
+MONTHLY = "Monthly"
+THREE_MONTHS = "Three Months"
+SIX_MONTHS = "Six Months"
+YEARLY = "Yearly"
+ADMIN_MANAGER = "admin"
