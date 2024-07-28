@@ -1334,7 +1334,7 @@ class ViewFrame(ctk.CTkFrame):
 
         # Create a frame that holds the table
         table_frame=ctk.CTkFrame(self)
-        table_frame.pack(pady=10, padx=10)
+        table_frame.pack(pady=5, padx=10)
 
         style=ttk.Style()
 
@@ -1343,10 +1343,10 @@ class ViewFrame(ctk.CTkFrame):
         style.configure("Treeview",
                         background="#2a2d2e",
                         foreground="white",
-                        rowheight=50,
+                        rowheight=35,
                         fieldbackground="#343638",
                         bordercolor="#343638",
-                        borderwidth=5,
+                        borderwidth=2,
                         anchor="center")
         style.map('Treeview', background=[('selected', '#22559b')])
 
