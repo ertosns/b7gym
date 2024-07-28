@@ -42,6 +42,8 @@ def send_whats_msg(to_phone_number, img_path, message):
     messenger = WhatsApp()
     messenger.find_user(to_phone_number)
     messenger.send_message(message)
+    messenger = WhatsApp()
+    messenger.find_user(to_phone_number)
     messenger.send_picture(img_path)
 
 def change_appearance_mode_event(new_appearance_mode):
