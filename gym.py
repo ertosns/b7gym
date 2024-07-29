@@ -573,27 +573,95 @@ def update_income_report(root, ax, canvas):
 
     # Connect to the members database
     conn_members=sqlite3.connect('SQLite db/registration_form.db')
-    cursor_members=conn_members.cursor()
-
     # Retrieve monthly member count
+    # Retrieve male counts
+    full_week_male_cursor_members=conn_members.cursor()
+    # full-week mode
     if current_account_manager == ADMIN_MANAGER:
-        cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration GROUP BY month")
+        full_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (MALE,FULL_WEEK,))
     else:
-        cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? GROUP BY month", (current_account_manager,))
-    members_data=cursor_members.fetchall()
-
+        full_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,MALE,FULL_WEEK,))
+    full_week_male_members_data=full_week_male_cursor_members.fetchall()
+    # half-week mode
+    half_week_male_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        half_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (MALE,HALF_WEEK,))
+    else:
+        half_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,MALE,HALF_WEEK,))
+    half_week_male_members_data=half_week_male_cursor_members.fetchall()
+    #
+    # Retrieve Female counts
+    # full_week mode
+    full_week_female_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        full_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (FEMALE,FULL_WEEK,))
+    else:
+        full_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,FEMALE,FULL_WEEK,))
+    full_week_female_members_data=full_week_female_cursor_members.fetchall()
+    # half week mode
+    half_week_female_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        half_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (FEMALE,HALF_WEEK,))
+    else:
+        half_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,FEMALE,HALF_WEEK,))
+    half_week_female_members_data=half_week_female_cursor_members.fetchall()
+    # full-week cardio
+    full_week_cardio_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        full_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE cardio_mode=? GROUP BY month", (FULL_WEEK,))
+    else:
+        full_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? GROUP BY month", (current_account_manager, FULL_WEEK,))
+    full_week_cardio_members_data=full_week_cardio_cursor_members.fetchall()
+    # half week cardio
+    half_week_cardio_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        half_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE cardio_mode=? GROUP BY month", (HALF_WEEK,))
+    else:
+        half_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? GROUP BY month", (current_account_manager,HALF_WEEK,))
+    half_week_cardio_members_data=half_week_cardio_cursor_members.fetchall()
     conn_members.close()
 
     # Process member data
     merged_data={}
-    for month, members_count in members_data:
-        merged_data[month]={'members': members_count * 700}
-
+    # (1) full week male member data
+    for month, count in full_week_male_members_data:
+        merged_data[month]={'full_week_male': count * 200}
+    # (2) half week male member data
+    for month, count in half_week_male_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['half_week_male'] = count * 100
+        else:
+            merged_data[month]={'half_week_male': count * 100}
+    # (3) full week female member data
+    for month, count in full_week_female_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['full_week_female'] = count * 200
+        else:
+            merged_data[month]={'full_week_female': count * 200}
+    # (4) half week female member data
+    for month, count in half_week_female_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['half_week_female'] = count * 100
+        else:
+            merged_data[month]={'half_week_female': count * 100}
+    # (5) full week cardio member data
+    for month, count in full_week_cardio_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['full_week_cardio'] = count * 300
+        else:
+            merged_data[month]={'full_week_female': count * 300}
+    # (6) half week cardio member data
+    for month, count in half_week_cardio_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['half_week_cardio'] = count * 150
+        else:
+            merged_data[month]={'half_week_cardio': count * 150}
     # Extract month labels and total member incomes
-    if merged_data is not {}:
+    print('merged_data: {}'.format(merged_data))
+    if merged_data is {}:
         return
     months, member_incomes=zip(
-        *[(month, data['members']) for month, data in merged_data.items()])
+        *[(month, sum(data.values())) for month, data in merged_data.items()])
 
     # Convert months to a NumPy array with a specific data type (e.g., float)
     months_array=np.array(months, dtype=str)
@@ -622,7 +690,7 @@ def update_income_report(root, ax, canvas):
 
     # Schedule the next update
     root.after(1000, update_income_report, root, ax, canvas)
-    root.resizable(True, True)
+    #root.resizable(True, True)
 
 
 def update_visitors_income_report(root, ax, canvas):
@@ -795,7 +863,7 @@ class RegistrationFrame(ctk.CTkFrame):
         # Sex
         sex_label=ctk.CTkLabel(personal_info_frame, text="Sex:", font=label_font)
         sex_label.grid(row=7, column=0, padx=20, pady=5, sticky="w")
-        sex_entry=ctk.CTkComboBox(personal_info_frame, values=["Male", "Female", "Other"])
+        sex_entry=ctk.CTkComboBox(personal_info_frame, values=[MALE, FEMALE])
         sex_entry.grid(row=7, column=1, padx=20, pady=5)
 
         # Create a DateEntry widget for the birthdate
@@ -917,7 +985,6 @@ class RegistrationFrame(ctk.CTkFrame):
 
         self.account_manager_entry=ctk.CTkComboBox(subscription_frame, values=account_manager_options)
         # default value
-        assert current_account_manager in account_manager_options
         self.account_manager_entry.set(current_account_manager)
         self.account_manager_entry.grid(row=7, column=1, padx=20, pady=15)
         # Bind the function to the <<ComboboxSelected>> event
@@ -3188,7 +3255,7 @@ class TrainerFrame(ctk.CTkFrame):
         # Sex
         sex_label=ctk.CTkLabel(personal_info_frame, text="Sex:", font=label_font)
         sex_label.grid(row=7, column=0, padx=20, pady=5, sticky="w")
-        sex_entry=ctk.CTkComboBox(personal_info_frame, values=["Male", "Female", "Other"])
+        sex_entry=ctk.CTkComboBox(personal_info_frame, values=[MALE, FEMALE])
         sex_entry.grid(row=7, column=1, padx=20, pady=5)
 
         # Create a DateEntry widget for the birthdate
@@ -4750,7 +4817,7 @@ class RegisterEmployeeFrame(ctk.CTkFrame):
         # Sex
         sex_label=ctk.CTkLabel(personal_info_frame, text="Sex:", font=label_font)
         sex_label.grid(row=7, column=0, padx=20, pady=5, sticky="w")
-        sex_entry=ctk.CTkComboBox(personal_info_frame, values=["Male", "Female", "Other"])
+        sex_entry=ctk.CTkComboBox(personal_info_frame, values=[MALE, FEMALE])
         sex_entry.grid(row=7, column=1, padx=20, pady=5)
 
         # Create a DateEntry widget for the birthdate
