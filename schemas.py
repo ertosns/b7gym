@@ -30,7 +30,7 @@ try:
     ''')
 
     cursor.execute('''INSERT INTO accounts (full_name, contact_no, username, password) values (?,?,?,?)
-    ''', (1, ADMIN_MANAGER, 'Admin', 'Admin@gym'))
+    ''', (ADMIN_MANAGER, ADMIN_NO, 'Admin', 'Admin@gym'))
     conn.commit()
 except Exception as e:
     print("Error:", e)
