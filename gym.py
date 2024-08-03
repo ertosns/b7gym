@@ -357,8 +357,9 @@ class MainApp(ctk.CTk):
     def logout(self):
         current_account_manager = None
         # Close the main application window
+        self.quit()
         self.destroy()
-
+        print("app destroyed...")
         # Reopen the login window
         create_login_window()
 
@@ -1659,7 +1660,7 @@ class EditForm(ctk.CTkToplevel):
         # Create labels and entry fields for editing the record
         labels=["First Name:", "Middle Name:", "Last Name:", "Age:", "Sex:", "Date of Birth:",
                 "Contact No:", "Email Address:", "Subscription ID:",
-                "Subscription Period:", "Start Date:", "End Date:", "Status:"]
+                "Subscription Period:", "Start Date:", "End Date:", "Status:", "Week_mode:", "Cardio_mode:"]
         self.entry_fields=[]
 
         for i, label_text in enumerate(labels):
@@ -1667,7 +1668,7 @@ class EditForm(ctk.CTkToplevel):
             label.grid(row=i, column=0, padx=10, pady=5, sticky="w")
             entry=ctk.CTkEntry(edit_frame)
             entry.grid(row=i, column=1, padx=10, pady=5, ipadx=10, ipady=3)
-            entry.insert(0, self.member_data[i + 1])  # Fill with data from the database
+            entry.insert(0, self.member_data[i + 1 if i<REGISTRATION_PHOTO_IDX else i])  # Fill with data from the database
             self.entry_fields.append(entry)
 
         # Display the qr code of the member inside the edit form
@@ -1795,10 +1796,10 @@ class EditForm(ctk.CTkToplevel):
             ''', (*updated_data, self.member_data[0]))
 
             # Print the updated end_date to check if it's changed
-            print(f"Updated end_date: {updated_data[14]}")
+            print(f"Updated end_date: {updated_data[11]}")
 
             # If end_date is set to the expiration day, update status to "Expired"
-            end_date=datetime.strptime(updated_data[14], '%Y-%m-%d').date()
+            end_date=datetime.strptime(updated_data[11], '%Y-%m-%d').date()
             current_date=datetime.now().date()
 
             # Check if the end_date is 3 days from the current date
@@ -6113,9 +6114,7 @@ def create_login_window():
     login_button=ctk.CTkButton(master=frame, text='Login', command=login)
     login_button.pack(pady=12, padx=10)
 
-    forgot_password_button=ctk.CTkButton(master=frame, text='Reset Username & Password?', fg_color="Red",
-                                         text_color=("gray10", "gray90"),
-                                         hover_color=("red3", "red4"), command=forgot_password)
+    forgot_password_button=ctk.CTkButton(master=frame, text='Reset Username & Password?', fg_color="Red", text_color=("gray10", "gray90"), hover_color=("red3", "red4"), command=forgot_password)
     forgot_password_button.pack(pady=12, padx=10)
 
     login_window.mainloop()
