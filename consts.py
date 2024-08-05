@@ -1,3 +1,4 @@
+NO_BODYBUILDING = "No-Bodybuilding"
 FULL_WEEK = "Full-Week"
 HALF_WEEK = "Half-Week"
 NO_CARDIO = "No-Cardio"

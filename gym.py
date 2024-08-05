@@ -47,8 +47,6 @@ def send_whats_img(to_phone_number, img_path):
     messenger = WhatsApp()
     messenger.find_user(to_phone_number)
     messenger.send_picture(img_path)
-    #messenger.wait_until_message_successfully_sent()
-    messenger.close_when_message_successfully_sent()
     print("picture sent successfully")
 
 def change_appearance_mode_event(new_appearance_mode):
@@ -950,7 +948,7 @@ class RegistrationFrame(ctk.CTkFrame):
         # full_week or half_week modes
         week_mode_label=ctk.CTkLabel(subscription_frame, text="week mode:", font=label_font)
         week_mode_label.grid(row=4, column=0, padx=20, pady=10, sticky="w")
-        week_mode_options=[FULL_WEEK, HALF_WEEK]
+        week_mode_options=[FULL_WEEK, HALF_WEEK, NO_BODYBUILDING]
         self.week_mode_entry=ctk.CTkComboBox(subscription_frame, values=week_mode_options, command=self.update_week_mode_multiplier_on_subscription_change)
 
         # Set "Monthly" as the default value
@@ -1153,14 +1151,38 @@ class RegistrationFrame(ctk.CTkFrame):
             messagebox.showerror("Invalid Date", "Please enter a valid date in the format YYYY-MM-DD.")
 
     def update_dates_on_subscription_change(self, event):
+        '''
+        description
+        multiplier mechanism
+        use the maximum of both multipliers
+        cases
+        Bodybuilding
+        full-week  half-week no-bodybuilding
+          (A)        (B)        (C)
+        cardio
+        full-week  half-week no-cardio
+          (a)        (b)        (c)
+        for all combinations:
+        Aa, Ba, Ca
+        Ab, Bb, Cb
+        Ac, Bc, Cc
+
+        instead of using two time periods for each mode, only a single mode is used for simplicity.
+        clearly Aa, Bb, Cc, Cb, Ca can be eliminated, Ac, and Bc are also clear since it's a
+        single mode,  the following remains:
+        - Ba: half week bodybuilding, full week cardio, in this case cardio week period is
+              longer, and the saved period is cardio period
+        - Ab: bodybuilding period saved since it's longer, to calculate the cardio period, cardio multiplier times this period.
+        '''
         subscription_period=self.subscription_period_entry.get()
 
         # Calculate start and end dates based on the selected subscription period
         current_date=datetime.now()
-        print("***************************************************using multiplier: {}".format(self.week_mode_multiplier))
+
+        multiplier = max(self.week_mode_multiplier, self.cardio_mode_multiplier)
         if subscription_period == MONTHLY:
             self.start_date=current_date
-            td = timedelta(days=int(30*self.week_mode_multiplier))
+            td = timedelta(days=int(30*multiplier))
             print("timedelta: {}".format(td))
             self.end_date=self.start_date + td
             self.discount_multiplier = MONTHLY_DISCOUNT
@@ -1168,27 +1190,29 @@ class RegistrationFrame(ctk.CTkFrame):
             print("end date: {}".format(self.end_date))
         elif subscription_period == THREE_MONTHS:
             self.start_date=current_date
-            self.end_date=self.start_date + timedelta(days=int(90*self.week_mode_multiplier))
+            self.end_date=self.start_date + timedelta(days=int(90*multiplier))
             self.discount_multiplier = THREE_MONTHS_DISCOUNT
         elif subscription_period == SIX_MONTHS:
             self.start_date=current_date
-            self.end_date=self.start_date + timedelta(days=int(180*self.week_mode_multiplier))
+            self.end_date=self.start_date + timedelta(days=int(180*multiplier))
             self.discount_multiplier = SIX_MONTHS_DISCOUNT
         elif subscription_period == YEARLY:
             self.start_date=current_date
-            self.end_date=self.start_date + timedelta(days=int(365*self.week_mode_multiplier))
+            self.end_date=self.start_date + timedelta(days=int(365*multiplier))
             self.discount_multiplier = YEARLY_DISCOUNT
         else:
             return  # Do nothing for invalid periods
         print("start: {}".format(self.start_date))
         print("end: {}".format(self.end_date))
+
     def update_week_mode_multiplier_on_subscription_change(self, event):
         week_mode = self.week_mode_entry.get()
         if week_mode == FULL_WEEK:
             self.week_mode_multiplier = 1
         elif week_mode == HALF_WEEK:
             self.week_mode_multiplier = 0.5
-        print("*********************************************multiplier: {}".format(self.week_mode_multiplier))
+        elif week_mode == NO_BODYBUILDING:
+            self.week_mode_multiplier = 0
         self.update_dates_on_subscription_change(event)
 
     def update_cardio_mode_multiplier_on_subscription_change(self, event):
@@ -1303,7 +1327,11 @@ class RegistrationFrame(ctk.CTkFrame):
 
         # After successful registration, send an SMS
         formatted_contact_no=self.contact_no_entry.get()  # Assuming contact_no_entry contains the formatted phone number
-        sms_message=f"Hello {first_name}!, You have Successfully Subscribed for {subscription_period} Period. Subscription ID:{subscription_id}. Start Date: {self.start_date} End Date: {self.end_date}, - B7 GYM"
+        intro_msg = f"Hello {first_name}!, You have Successfully Subscribed for {subscription_period} Period. Subscription ID:{subscription_id}. Start Date: {self.start_date} End Date: {self.end_date} "
+        bodybuilding_msg = f" Bodybuilding mode: {week_mode}, " if week_mode!=NO_BODYBUILDING else ''
+        cardio_msg = f" Cardio mode: {cardio_mode}, " if cardio_mode!=NO_CARDIO else ''
+        outro_msg =  " - B7 GYM"
+        sms_message = intro_msg +  bodybuilding_msg  + cardio_msg  + outro_msg
         send_whats_msg(formatted_contact_no, sms_message)
         send_whats_img(formatted_contact_no, file_path)
 
