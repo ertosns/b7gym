@@ -490,7 +490,7 @@ class WhatsApp(object):
             EC.presence_of_element_located(
                 (
                     By.XPATH,
-                    '//*[@id="main"]/footer//*[@data-icon="attach-menu-plus"]/..',
+                    '//*[@id="main"]/footer//*[@data-icon="plus"]/..',
                 )
             )
         )
@@ -547,11 +547,8 @@ class WhatsApp(object):
             picture ([type]): [description]
         """
         try:
-            print("1")
             filename = os.path.realpath(picture)
-            print("2: {}".format(filename))
             self.find_attachment()
-            print("3")
             # To send an Image
             imgButton = self.wait.until(
                 EC.presence_of_element_located(
@@ -561,16 +558,11 @@ class WhatsApp(object):
                     )
                 )
             )
-            print("4")
             imgButton.send_keys(filename)
-            print("5")
             if message:
                 self.add_caption(message, media_type="image")
-            print("6")
             self.send_attachment()
-            print("7")
             LOGGER.info(f"Picture has been successfully sent to {self.mobile}")
-            print("8")
         except (NoSuchElementException, Exception) as bug:
             LOGGER.exception(f"Failed to send a message to {self.mobile} - {bug}")
         finally:
