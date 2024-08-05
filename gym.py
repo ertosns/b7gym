@@ -32,25 +32,30 @@ ctk.set_default_color_theme("dark-blue")
 current_account_manager = None
 account_manager_options = []
 
-def send_msg(phone_number, message):
-    messenger = WhatsApp()
-    messenger.find_user(phone_number)
-    messenger.send_message(message)
-
-def send_whats_msg(to_phone_number, img_path, message):
+def send_whats_msg(to_phone_number, message):
+    print("sending message to {}".format(to_phone_number))
     # redefine messenger everytime just in case the browser is crashed.
     messenger = WhatsApp()
     messenger.find_user(to_phone_number)
     messenger.send_message(message)
+    #messenger.wait_until_message_successfully_sent()
+    messenger.close_when_message_successfully_sent()
+    print("message sent successfully")
+
+def send_whats_img(to_phone_number, img_path):
+    print("sending picture to {} at path: {}".format(to_phone_number, img_path))
     messenger = WhatsApp()
     messenger.find_user(to_phone_number)
     messenger.send_picture(img_path)
+    #messenger.wait_until_message_successfully_sent()
+    messenger.close_when_message_successfully_sent()
+    print("picture sent successfully")
 
 def change_appearance_mode_event(new_appearance_mode):
     ctk.set_appearance_mode(new_appearance_mode)
 
 def send_sms_notification(to_phone_number, message):
-    send_msg(to_phone_number, message)
+    send_whats_msg(to_phone_number, message)
 
 def check_date():
     current_date=datetime.now()
@@ -74,7 +79,7 @@ def check_date():
 
             # Send SMS to the member
             sms_message="Your gym membership has expired. Renew your subscription to continue accessing B7 GYM."
-            send_msg(contact_no, sms_message)
+            send_whats_msg(contact_no, sms_message)
 
 
 # create a function that sends sms for 3 days before expiration
@@ -833,6 +838,11 @@ class RegistrationFrame(ctk.CTkFrame):
         # Create a custom font for labels
         label_font=ctk.CTkFont(family="Arial bold", size=16)  # Adjust the size as
 
+        self.week_mode_multiplier=1
+        self.cardio_mode_multiplier=1
+        self.start_date=None
+        self.end_date=None
+
         # Name
         first_name_label=ctk.CTkLabel(personal_info_frame, text="First Name:", font=label_font)
         first_name_label.grid(row=2, column=0, padx=20, pady=5, sticky="w")
@@ -927,21 +937,21 @@ class RegistrationFrame(ctk.CTkFrame):
         subscription_period_label.grid(row=2, column=0, padx=20, pady=10, sticky="w")
 
         subscription_period_options=[MONTHLY, THREE_MONTHS, SIX_MONTHS, YEARLY]
-        self.subscription_period_entry=ctk.CTkComboBox(subscription_frame, values=subscription_period_options)
+        self.subscription_period_entry=ctk.CTkComboBox(subscription_frame, values=subscription_period_options, command=self.update_dates_on_subscription_change)
 
         # Set "Monthly" as the default value
         self.subscription_period_entry.set(MONTHLY)
 
-        self.subscription_period_entry.grid(row=3, column=1, padx=20, pady=15)
+        self.subscription_period_entry.grid(row=2, column=1, padx=20, pady=15)
 
         # Bind the function to the <<ComboboxSelected>> event
-        self.subscription_period_entry.bind("<<ComboboxSelected>>", self.update_dates_on_subscription_change)
+        #self.subscription_period_entry.bind("<<ComboboxSelected>>", self.update_dates_on_subscription_change)
 
         # full_week or half_week modes
         week_mode_label=ctk.CTkLabel(subscription_frame, text="week mode:", font=label_font)
         week_mode_label.grid(row=4, column=0, padx=20, pady=10, sticky="w")
         week_mode_options=[FULL_WEEK, HALF_WEEK]
-        self.week_mode_entry=ctk.CTkComboBox(subscription_frame, values=week_mode_options)
+        self.week_mode_entry=ctk.CTkComboBox(subscription_frame, values=week_mode_options, command=self.update_week_mode_multiplier_on_subscription_change)
 
         # Set "Monthly" as the default value
         self.week_mode_entry.set(FULL_WEEK)
@@ -949,7 +959,7 @@ class RegistrationFrame(ctk.CTkFrame):
         self.week_mode_entry.grid(row=4, column=1, padx=20, pady=15)
 
         # Bind the function to the <<ComboboxSelected>> event
-        self.week_mode_entry.bind("<<ComboboxSelected>>", self.update_week_mode_multiplier_on_subscription_change)
+        #self.week_mode_entry.bind("<<ComboboxSelected>>", self.update_week_mode_multiplier_on_subscription_change)
         ##
         # cardio mode
         ##
@@ -957,7 +967,7 @@ class RegistrationFrame(ctk.CTkFrame):
         cardio_mode_label=ctk.CTkLabel(subscription_frame, text="cardio mode:", font=label_font)
         cardio_mode_label.grid(row=5, column=0, padx=20, pady=10, sticky="w")
         cardio_mode_options=[FULL_WEEK, HALF_WEEK, NO_CARDIO]
-        self.cardio_mode_entry=ctk.CTkComboBox(subscription_frame, values=cardio_mode_options)
+        self.cardio_mode_entry=ctk.CTkComboBox(subscription_frame, values=cardio_mode_options, command=self.update_cardio_mode_multiplier_on_subscription_change)
 
         # Set "Monthly" as the default value
         self.cardio_mode_entry.set(NO_CARDIO)
@@ -965,7 +975,7 @@ class RegistrationFrame(ctk.CTkFrame):
         self.cardio_mode_entry.grid(row=5, column=1, padx=20, pady=15)
 
         # Bind the function to the <<ComboboxSelected>> event
-        self.cardio_mode_entry.bind("<<ComboboxSelected>>", self.update_cardio_mode_multiplier_on_subscription_change)
+        #self.cardio_mode_entry.bind("<<ComboboxSelected>>", self.update_cardio_mode_multiplier_on_subscription_change)
         ##
         # get user accounts names
         global account_manager_options
@@ -990,21 +1000,6 @@ class RegistrationFrame(ctk.CTkFrame):
         self.account_manager_entry.grid(row=7, column=1, padx=20, pady=15)
         # Bind the function to the <<ComboboxSelected>> event
         self.account_manager_entry.bind("<<ComboboxSelected>>", self.update_account_manager_on_subscription_change)
-        ##
-        # subscription program
-        subscription_period_label=ctk.CTkLabel(subscription_frame, text="Subscription Period:", font=label_font)
-        subscription_period_label.grid(row=2, column=0, padx=20, pady=10, sticky="w")
-
-        subscription_period_options=["Weekly", "Monthly", "Yearly"]
-        self.subscription_period_entry=ctk.CTkComboBox(subscription_frame, values=subscription_period_options)
-
-        # Set "Monthly" as the default value
-        self.subscription_period_entry.set("Monthly")
-
-        self.subscription_period_entry.grid(row=2, column=1, padx=20, pady=15)
-
-        # Bind the function to the <<ComboboxSelected>> event
-        self.subscription_period_entry.bind("<<ComboboxSelected>>", self.update_dates_on_subscription_change)
 
 
         # Button to trigger photo upload
@@ -1043,8 +1038,8 @@ class RegistrationFrame(ctk.CTkFrame):
         self.subscription_id_entry=self.subscription_id_entry
         #self.cardio_mode = self.cardio_mode
         #self.week_mode = self.week_mode
-        # self.start_timestamp_entry=self.start_timestamp_entry
-        # self.end_timestamp_entry=self.end_timestamp_entry
+        #self.start_timestamp_entry=self.start_timestamp_entry
+        #self.end_timestamp_entry=self.end_timestamp_entry
 
         with sqlite3.connect('SQLite db/registration_form.db') as conn:
             cursor=conn.cursor()
@@ -1162,67 +1157,50 @@ class RegistrationFrame(ctk.CTkFrame):
 
         # Calculate start and end dates based on the selected subscription period
         current_date=datetime.now()
-
+        print("***************************************************using multiplier: {}".format(self.week_mode_multiplier))
         if subscription_period == MONTHLY:
             self.start_date=current_date
-            self.end_date=start_date + timedelta(days=int(30*self.week_mode_multiplier))
+            td = timedelta(days=int(30*self.week_mode_multiplier))
+            print("timedelta: {}".format(td))
+            self.end_date=self.start_date + td
             self.discount_multiplier = MONTHLY_DISCOUNT
+            print("start date: {}".format(self.start_date))
+            print("end date: {}".format(self.end_date))
         elif subscription_period == THREE_MONTHS:
             self.start_date=current_date
-            self.end_date=start_date + timedelta(days=int(90*self.week_mode_multiplier))
+            self.end_date=self.start_date + timedelta(days=int(90*self.week_mode_multiplier))
             self.discount_multiplier = THREE_MONTHS_DISCOUNT
         elif subscription_period == SIX_MONTHS:
             self.start_date=current_date
-            self.end_date=start_date + timedelta(days=int(180*self.week_mode_multiplier))
+            self.end_date=self.start_date + timedelta(days=int(180*self.week_mode_multiplier))
             self.discount_multiplier = SIX_MONTHS_DISCOUNT
         elif subscription_period == YEARLY:
             self.start_date=current_date
-            self.end_date=start_date + timedelta(days=int(365*self.week_mode_multiplier))
+            self.end_date=self.start_date + timedelta(days=int(365*self.week_mode_multiplier))
             self.discount_multiplier = YEARLY_DISCOUNT
         else:
             return  # Do nothing for invalid periods
-
-        ## TODO fix this should be called after week mode is set.
-        # Update the DateEntry widgets
-        self.start_timestamp_entry.set_date(start_date.strftime('%Y-%m-%d'))
-        self.end_timestamp_entry.set_date(end_date.strftime('%Y-%m-%d'))
-
-        # Save the start_date and end_date data in the database
-        with sqlite3.connect('SQLite db/registration_form.db') as conn:
-            cursor=conn.cursor()
-
-            # Insert the subscription information into the database
-            cursor.execute('''
-                INSERT INTO registration (start_date, end_date)
-                VALUES (?, ?)
-            ''', (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
-
+        print("start: {}".format(self.start_date))
+        print("end: {}".format(self.end_date))
     def update_week_mode_multiplier_on_subscription_change(self, event):
-        week_mode = self.week_mode.entry.get()
-        if subscription_period == FULL_WEEK:
+        week_mode = self.week_mode_entry.get()
+        if week_mode == FULL_WEEK:
             self.week_mode_multiplier = 1
-        elif subscription_period == HALF_WEEK:
+        elif week_mode == HALF_WEEK:
             self.week_mode_multiplier = 0.5
+        print("*********************************************multiplier: {}".format(self.week_mode_multiplier))
+        self.update_dates_on_subscription_change(event)
 
     def update_cardio_mode_multiplier_on_subscription_change(self, event):
-        week_mode = self.week_mode.entry.get()
-        if subscription_period == FULL_WEEK:
+        cardio_mode = self.cardio_mode_entry.get()
+        if cardio_mode == FULL_WEEK:
             self.cardio_mode_multiplier = 1
-        elif subscription_period == HALF_WEEK:
+        elif cardio_mode == HALF_WEEK:
             self.cardio_mode_multiplier = 0.5
-        elif subscription_period == NO_CARDIO:
+        elif cardio_mode == NO_CARDIO:
             self.cardio_mode_multiplier = 0
         else:
             return
-        # Save the start_date and end_date data in the database
-        with sqlite3.connect('SQLite db/registration_form.db') as conn:
-            cursor=conn.cursor()
-
-            # Insert the subscription information into the database
-            cursor.execute('''
-                INSERT INTO cardio_registration (start_date, end_date, cardio_mode)
-                VALUES (?, ?, ?)
-            ''', (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), self.cardio_mode_multiplier))
 
     def update_account_manager_on_subscription_change(self, sevent):
         #TODO implement
@@ -1279,23 +1257,9 @@ class RegistrationFrame(ctk.CTkFrame):
         conn=sqlite3.connect('SQLite db/registration_form.db')
         cursor=conn.cursor()
 
-        # Calculate the expiration date based on the subscription period
-        if subscription_period == "Weekly":
-            duration=timedelta(days=7)
-        elif subscription_period == "Monthly":
-            duration=timedelta(weeks=4)  # Assuming 4 weeks in a month for simplicity
-        elif subscription_period == "Yearly":
-            duration=timedelta(weeks=52)  # Assuming 52 weeks in a year for simplicity
-        else:
-            messagebox.showerror("Validation Error", "Invalid subscription period.")
-            return
-
-        start_date=datetime.now()
-        end_date=start_date + duration
-
         # Format the date to include only the date part
-        start_date_str=start_date.strftime('%Y-%m-%d')
-        end_date_str=end_date.strftime('%Y-%m-%d')
+        start_date_str=self.start_date.strftime('%Y-%m-%d')
+        end_date_str=self.end_date.strftime('%Y-%m-%d')
 
         # Read the binary data of the photo from the member_profile directory
         photo_file_name=self.uploaded_photo_entry.get()
@@ -1334,13 +1298,14 @@ class RegistrationFrame(ctk.CTkFrame):
         qr_img=qr.make_image(fill_color="black", back_color="white")
 
         # Specify the file path to save the QR code in the folder
-        file_path=os.path.join(folder_path, f"dgrit_{last_name}.png")
+        file_path=os.path.join(folder_path, f"b7_{last_name}.png")
         qr_img.save(file_path)
 
         # After successful registration, send an SMS
         formatted_contact_no=self.contact_no_entry.get()  # Assuming contact_no_entry contains the formatted phone number
-        sms_message=f"Hello {first_name}!, You have Successfully Subscribed for {subscription_period} Period. Subscription ID:{subscription_id}. Start Date: {start_date} End Date: {end_date}, - B7 GYM"
-        send_whats_msg(formatted_contact_no, file_path, sms_message)
+        sms_message=f"Hello {first_name}!, You have Successfully Subscribed for {subscription_period} Period. Subscription ID:{subscription_id}. Start Date: {self.start_date} End Date: {self.end_date}, - B7 GYM"
+        send_whats_msg(formatted_contact_no, sms_message)
+        send_whats_img(formatted_contact_no, file_path)
 
         # Show a success message
         messagebox.showinfo("Registration Successful", "User registered successfully!")
@@ -1688,7 +1653,7 @@ class EditForm(ctk.CTkToplevel):
         download_button.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         # Display the qr code from the member_qrcodes folder based on the last name of the member
-        qr_code_path=os.path.join("templates/member_qrcodes", f"dgrit_{self.member_data[3]}.png")
+        qr_code_path=os.path.join("templates/member_qrcodes", f"b7_{self.member_data[3]}.png")
         qr_code_image=Image.open(qr_code_path)
         qr_code_image=qr_code_image.resize((200, 200), Image.LANCZOS)
         qr_code_image=ImageTk.PhotoImage(qr_code_image)
@@ -1763,11 +1728,11 @@ class EditForm(ctk.CTkToplevel):
     # Download qr code
     def download_qr_code(self):
         # Download the displayed QR code and save it to the Downloads folder in file explorer
-        qr_code_path=os.path.join("templates/member_qrcodes", f"dgrit_{self.member_data[3]}.png")
+        qr_code_path=os.path.join("templates/member_qrcodes", f"b7_{self.member_data[3]}.png")
         qr_code_image=Image.open(qr_code_path)
 
         # Assuming self.member_data[3] is the unique identifier for the member
-        save_path=os.path.join(os.path.expanduser("~"), "Downloads", f"dgrit_{self.member_data[3]}.png")
+        save_path=os.path.join(os.path.expanduser("~"), "Downloads", f"b7_{self.member_data[3]}.png")
         qr_code_image.save(save_path)
 
         # show a success message
@@ -1807,7 +1772,7 @@ class EditForm(ctk.CTkToplevel):
                 # Send SMS to notify the member
                 formatted_contact_no=self.entry_fields[8].get()
                 sms_message="Your gym membership will expire in 3 days. Renew your subscription to continue accessing B7 GYM."
-                send_msg(formatted_contact_no, sms_message)
+                send_whats_msg(formatted_contact_no, sms_message)
 
             print(f"end_date: {end_date}")
             print(f"current_date: {current_date}")
@@ -1819,7 +1784,7 @@ class EditForm(ctk.CTkToplevel):
                 # get the formatted contact no of the edit form
                 formatted_contact_no=self.entry_fields[8].get()
                 sms_message="Your gym membership has expired. Renew your subscription to continue accessing B7 GYM."
-                send_msg(formatted_contact_no, sms_message)
+                send_whats_msg(formatted_contact_no, sms_message)
 
             elif end_date > current_date:
                 print("Updating status to 'Ongoing'")
@@ -2037,7 +2002,7 @@ class RenewSubscriptionFrame(ctk.CTkToplevel):
             # Send an SMS to the member for renewal
             formatted_contact_no=self.member_data[1]
             sms_message=f"Hello {self.member_data[2]}!, Your Subscription has been Renewed. Start Date: {start_date} End Date: {end_date}"
-            send_msg(formatted_contact_no, sms_message)
+            send_whats_msg(formatted_contact_no, sms_message)
 
             conn.commit()
 
@@ -2071,7 +2036,7 @@ class RenewSubscriptionFrame(ctk.CTkToplevel):
     def send_sms_expiration(self, contact_no, start_date, end_date):
         formatted_contact_no=contact_no
         sms_message=f"Hello {self.member_data[2]}!, Your subscription is expiring soon. Expiration date: {end_date}."
-        send_msg(formatted_contact_no, sms_message)
+        send_whats_msg(formatted_contact_no, sms_message)
 
 
 # ------------- FRAME 3 -----------------------#
@@ -2239,7 +2204,7 @@ class ScanFrame(ctk.CTkFrame):
                         VALUES (?, ?, ?, ?, ?, ?)
                     ''', (first_name, middle_name, last_name, contact_no, subscription_id, current_datetime))
 
-                    send_msg(contact_no,
+                    send_whats_msg(contact_no,
                                   f"Hello {first_name}!, You have Successfully Time In. Subscription ID:{subscription_id}. Time In: {current_datetime}, - B7 GYM")
 
                 elif attendance_type == "Time Out":
@@ -2249,7 +2214,7 @@ class ScanFrame(ctk.CTkFrame):
                         WHERE subscription_id = ? AND time_out IS NULL
                     ''', (current_datetime, subscription_id))
 
-                    send_msg(contact_no,
+                    send_whats_msg(contact_no,
                                   f"Hello {first_name}!, Thank you for coming. See you again! Subscription ID:{subscription_id}. Time Out: {current_datetime}, - B7 GYM")
 
                 conn_attendance.commit()
@@ -3451,13 +3416,13 @@ class TrainerFrame(ctk.CTkFrame):
         qr_img=qr.make_image(fill_color="black", back_color="white")
 
         # Specify the file path to save the QR code in the folder
-        file_path=os.path.join(folder_path, f"dgrit_trainer_{last_name}.png")
+        file_path=os.path.join(folder_path, f"b7_trainer_{last_name}.png")
         qr_img.save(file_path)
 
         # After successful registration, send an SMS
         formatted_contact_no=self.contact_no_entry.get()  # Assuming contact_no_entry contains the formatted phone number
         sms_message=f"Hello {first_name}!, You are registered as a Trainer in B7 Gym."
-        send_msg(formatted_contact_no, sms_message)
+        send_whats_msg(formatted_contact_no, sms_message)
 
         # Show a success message
         messagebox.showinfo("Registration Successful", "Trainer registered successfully!")
@@ -3772,7 +3737,7 @@ class EditTrainerForm(ctk.CTkToplevel):
         download_button.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         # Display the qr code from the member_qrcodes folder based on the last name of the member
-        qr_code_path=os.path.join("templates/trainer_qrcodes", f"dgrit_trainer_{self.trainer_data[3]}.png")
+        qr_code_path=os.path.join("templates/trainer_qrcodes", f"b7_trainer_{self.trainer_data[3]}.png")
         qr_code_image=Image.open(qr_code_path)
         qr_code_image=qr_code_image.resize((200, 200), Image.LANCZOS)
         qr_code_image=ImageTk.PhotoImage(qr_code_image)
@@ -3828,11 +3793,11 @@ class EditTrainerForm(ctk.CTkToplevel):
 
     def download_qr_code(self):
         # Download the displayed QR code and save it to the Downloads folder in file explorer
-        qr_code_path=os.path.join("templates/trainer_qrcodes", f"dgrit_trainer_{self.trainer_data[3]}.png")
+        qr_code_path=os.path.join("templates/trainer_qrcodes", f"b7_trainer_{self.trainer_data[3]}.png")
         qr_code_image=Image.open(qr_code_path)
 
         # Assuming self.member_data[3] is the unique identifier for the member
-        save_path=os.path.join(os.path.expanduser("~"), "Downloads", f"dgrit_trainer_{self.trainer_data[3]}.png")
+        save_path=os.path.join(os.path.expanduser("~"), "Downloads", f"b7_trainer_{self.trainer_data[3]}.png")
         qr_code_image.save(save_path)
 
         # show a success message
@@ -4063,7 +4028,7 @@ class ScanQrFrame(ctk.CTkFrame):
                                 INSERT INTO trainer_attendance (first_name, middle_name, last_name, contact_no, time_in)
                                 VALUES (?, ?, ?, ?, ?)
                             ''', (first_name, middle_name, last_name, contact_no, current_datetime))
-                            send_msg(contact_no,
+                            send_whats_msg(contact_no,
                                      f"Hello {first_name}!, You have Successfully Time In. Time In: {current_datetime}, - B7 GYM")
 
                         elif attendance_type == "Time Out":
@@ -4072,7 +4037,7 @@ class ScanQrFrame(ctk.CTkFrame):
                                 SET time_out = ?
                                 WHERE contact_no = ? AND time_out IS NULL
                             ''', (current_datetime, contact_no))
-                            send_msg(contact_no,
+                            send_whats_msg(contact_no,
                                      f"Hello {first_name}!, You have Successfully Time Out. Time In: {current_datetime}, - B7 GYM")
 
                         attendance_conn.commit()
@@ -4631,7 +4596,7 @@ class LogbookFrame(ctk.CTkFrame):
             ''', (first_name, middle_name, last_name, contact_no, current_time))
 
             # Message that visitor has attended
-            send_msg(contact_no,
+            send_whats_msg(contact_no,
                           f"Hello {first_name}!, Thank You for attending B7 GYM. Time In: {current_time}")
 
             # Commit the changes and close the database connection
@@ -5016,13 +4981,13 @@ class RegisterEmployeeFrame(ctk.CTkFrame):
         qr_img=qr.make_image(fill_color="black", back_color="white")
 
         # Specify the file path to save the QR code in the folder
-        file_path=os.path.join(folder_path, f"dgrit_employee_{last_name}.png")
+        file_path=os.path.join(folder_path, f"b7_employee_{last_name}.png")
         qr_img.save(file_path)
 
         # After successful registration, send an SMS
         formatted_contact_no=self.contact_no_entry.get()  # Assuming contact_no_entry contains the formatted phone number
         sms_message=f"Hello {first_name}!, You are registered as an Employee of B7 Gym."
-        send_msg(formatted_contact_no, sms_message)
+        send_whats_msg(formatted_contact_no, sms_message)
 
         # Show a success message
         messagebox.showinfo("Registration Successful", "Employee registered successfully!")
@@ -5337,7 +5302,7 @@ class EditEmployeeForm(ctk.CTkToplevel):
         download_button.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         # Display the qr code from the member_qrcodes folder based on the last name of the member
-        qr_code_path=os.path.join("templates/employee_qrcodes", f"dgrit_employee_{self.employee_data[3]}.png")
+        qr_code_path=os.path.join("templates/employee_qrcodes", f"b7_employee_{self.employee_data[3]}.png")
         qr_code_image=Image.open(qr_code_path)
         qr_code_image=qr_code_image.resize((200, 200), Image.LANCZOS)
         qr_code_image=ImageTk.PhotoImage(qr_code_image)
@@ -5393,11 +5358,11 @@ class EditEmployeeForm(ctk.CTkToplevel):
 
     def download_qr_code(self):
         # Download the displayed QR code and save it to the Downloads folder in file explorer
-        qr_code_path=os.path.join("templates/employee_qrcodes", f"dgrit_employee_{self.employee_data[3]}.png")
+        qr_code_path=os.path.join("templates/employee_qrcodes", f"b7_employee_{self.employee_data[3]}.png")
         qr_code_image=Image.open(qr_code_path)
 
         # Assuming self.member_data[3] is the unique identifier for the member
-        save_path=os.path.join(os.path.expanduser("~"), "Downloads", f"dgrit_employee_{self.employee_data[3]}.png")
+        save_path=os.path.join(os.path.expanduser("~"), "Downloads", f"b7_employee_{self.employee_data[3]}.png")
         qr_code_image.save(save_path)
 
         # show a success message
@@ -5644,7 +5609,7 @@ class EmployeeScanQrFrame(ctk.CTkFrame):
                                    INSERT INTO employee_attendance (first_name, middle_name, last_name, contact_no, time_in)
                                    VALUES (?, ?, ?, ?, ?)
                                ''', (first_name, middle_name, last_name, contact_no, current_datetime))
-                            send_msg(contact_no,
+                            send_whats_msg(contact_no,
                                      f"Hello {first_name}!, You have Successfully Time In. Time In: {current_datetime}, - B7 GYM")
 
                         elif attendance_type == "Time Out":
@@ -5653,7 +5618,7 @@ class EmployeeScanQrFrame(ctk.CTkFrame):
                                    SET time_out = ?
                                    WHERE contact_no = ? AND time_out IS NULL
                                ''', (current_datetime, contact_no))
-                            send_msg(contact_no,
+                            send_whats_msg(contact_no,
                                      f"Hello {first_name}!, You have Successfully Time Out. Time In: {current_datetime}, - B7 GYM")
 
                         attendance_conn.commit()
@@ -5937,7 +5902,7 @@ def register(full_name, contact_no, username, password, contact_no_entry, full_n
             # Insert the data into the database including full name and contact number
             cursor.execute('INSERT INTO accounts (full_name, contact_no, username, password) VALUES (?, ?, ?, ?)',
                            (full_name, contact_no, username, password))
-            send_msg(contact_no, f"Hello {full_name}!, You have Successfully Registered as user. - B7 GYM")
+            send_whats_msg(contact_no, f"Hello {full_name}!, You have Successfully Registered as user. - B7 GYM")
             conn.commit()
 
             messagebox.showinfo("Registration Successful", "Your account has been registered successfully.")
@@ -6004,7 +5969,7 @@ def forgot_password():
             conn.close()
 
             if registered_user:
-                send_msg(user_phone_number, f'Your OTP is: {otp}')
+                send_whats_msg(user_phone_number, f'Your OTP is: {otp}')
 
                 entered_otp=simpledialog.askstring('Enter OTP', 'Enter the OTP sent to your phone:', show='*')
 
@@ -6021,7 +5986,7 @@ def forgot_password():
                             cursor.execute('UPDATE accounts SET username = ?, password = ? WHERE contact_no = ?',
                                            (new_username, new_password, user_phone_number))
                             # send sms to the user's contact number to notify them of the username and password reset
-                            send_msg(user_phone_number,
+                            send_whats_msg(user_phone_number,
                                      f'Your username and password have been reset. Username: {new_username}. Password:{new_password}.')
                             conn.commit()
                             conn.close()

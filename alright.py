@@ -37,15 +37,12 @@ class WhatsApp(object):
         self.suffix_link = "https://web.whatsapp.com/send?phone={mobile}&text&type=phone_number&app_absent=1"
 
         if not browser:
-            browser = webdriver.Chrome( service=ChromeService(ChromeDriverManager().install()), options=self.chrome_options )
-            #browser = webdriver.Chrome(ChromeDriverManager().install(), options=self.chrome_options,)
-
+            browser = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=self.chrome_options)
             handles = browser.window_handles
             for _, handle in enumerate(handles):
                 if handle != browser.current_window_handle:
                     browser.switch_to.window(handle)
                     browser.close()
-
         self.browser = browser
         # CJM - 20220419: Added time_out=600 to allow the call with less than 600 sec timeout
         self.wait = WebDriverWait(self.browser, time_out)
@@ -134,7 +131,10 @@ class WhatsApp(object):
         Args:
             mobile ([type]): [description]
         """
+        if len(mobile)>0 and mobile[0]!='+':
+            mobile='+'+mobile
         try:
+            print("finding user of mobile number: {}".format(mobile))
             self.mobile = mobile
             link = self.get_phone_link(mobile)
             self.browser.get(link)
@@ -547,8 +547,11 @@ class WhatsApp(object):
             picture ([type]): [description]
         """
         try:
+            print("1")
             filename = os.path.realpath(picture)
+            print("2: {}".format(filename))
             self.find_attachment()
+            print("3")
             # To send an Image
             imgButton = self.wait.until(
                 EC.presence_of_element_located(
@@ -558,11 +561,16 @@ class WhatsApp(object):
                     )
                 )
             )
+            print("4")
             imgButton.send_keys(filename)
+            print("5")
             if message:
                 self.add_caption(message, media_type="image")
+            print("6")
             self.send_attachment()
+            print("7")
             LOGGER.info(f"Picture has been successfully sent to {self.mobile}")
+            print("8")
         except (NoSuchElementException, Exception) as bug:
             LOGGER.exception(f"Failed to send a message to {self.mobile} - {bug}")
         finally:
