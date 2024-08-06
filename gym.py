@@ -11,7 +11,6 @@ import random
 import string
 import qrcode
 import cv2
-import datetime
 import requests
 import calendar
 import numpy as np
@@ -358,6 +357,9 @@ class MainApp(ctk.CTk):
 
     # Add a logout method to the MainApp class
     def logout(self):
+        global current_account_manager
+        if current_account_manager == ADMIN_MANAGER:
+            admin_logedin()
         current_account_manager = None
         # Close the main application window
         self.quit()
@@ -568,6 +570,33 @@ def create_home_frame(home):
     # Update the income report graph
     update_visitors_income_report(home, ax, canvas)
     canvas.draw()
+    # -------------------FRAME 3 ----------------------#
+    daily_graph_frame=ctk.CTkFrame(dashboard_frame)
+    daily_graph_frame.pack(pady=5, padx=10, fill="both", expand=True)
+
+    # Monthly Income Report Graph
+    daily_income_frame=ctk.CTkFrame(daily_graph_frame)
+    daily_income_frame.grid(row=0, column=2, padx=20, pady=10, sticky="nsew")
+
+    # Create a small rectangular label for the income report
+    daily_income_label=ctk.CTkLabel(daily_income_frame, text="Daily Income (EGP)", font=("Arial bold", 16))
+    daily_income_label.pack(pady=5, padx=10, anchor="w")
+
+    # Create a figure and axis for the income report graph
+    fig, ax=plt.subplots(figsize=(3.5, 2), dpi=100)
+    canvas=FigureCanvasTkAgg(fig, master=daily_income_frame)
+    canvas_widget=canvas.get_tk_widget()
+    canvas_widget.pack(fill="both", expand=True)
+
+    # Update the income report graph
+    update_daily_report(home, ax, canvas)
+    canvas.draw()
+
+    # Make the rows and columns resizable
+    for i in range(5):
+        panel_frame.grid_columnconfigure(i, weight=1)
+
+    panel_frame.grid_rowconfigure(0, weight=1)
 
 
 # Graph
@@ -694,6 +723,136 @@ def update_income_report(root, ax, canvas):
 
     # Schedule the next update
     root.after(1000, update_income_report, root, ax, canvas)
+    #root.resizable(True, True)
+
+# Daily Graph
+def update_daily_report(root, ax, canvas):
+    '''
+    get user with indices higher than max index registered at last Admin login,
+    upon Admin login, insert max_idx in admin_login table.
+    admin_login table is formed if auto i
+    '''
+    last_admin_loginid = get_last_admin_login_id()
+    current_month=datetime.now().strftime('%Y-%m')
+    # Connect to the members database
+    conn_members=sqlite3.connect('SQLite db/registration_form.db')
+    # Retrieve monthly member count
+    # Retrieve male counts
+    full_week_male_cursor_members=conn_members.cursor()
+    # full-week mode
+    if current_account_manager == ADMIN_MANAGER:
+        full_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (MALE,FULL_WEEK,last_admin_loginid,))
+    else:
+        full_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,MALE,FULL_WEEK,last_admin_loginid,))
+    full_week_male_members_data=full_week_male_cursor_members.fetchall()
+    # half-week mode
+    half_week_male_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        half_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (MALE,HALF_WEEK,last_admin_loginid,))
+    else:
+        half_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,MALE,HALF_WEEK,last_admin_loginid,))
+    half_week_male_members_data=half_week_male_cursor_members.fetchall()
+    #
+    # Retrieve Female counts
+    # full_week mode
+    full_week_female_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        full_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (FEMALE,FULL_WEEK,last_admin_loginid,))
+    else:
+        full_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,FEMALE,FULL_WEEK,last_admin_loginid,))
+    full_week_female_members_data=full_week_female_cursor_members.fetchall()
+    # half week mode
+    half_week_female_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        half_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (FEMALE,HALF_WEEK,last_admin_loginid,))
+    else:
+        half_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,FEMALE,HALF_WEEK,last_admin_loginid,))
+    half_week_female_members_data=half_week_female_cursor_members.fetchall()
+    # full-week cardio
+    full_week_cardio_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        full_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE cardio_mode=? AND id>?", (FULL_WEEK,last_admin_loginid,))
+    else:
+        full_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? AND id>?", (current_account_manager, FULL_WEEK,last_admin_loginid,))
+    full_week_cardio_members_data=full_week_cardio_cursor_members.fetchall()
+    # half week cardio
+    half_week_cardio_cursor_members=conn_members.cursor()
+    if current_account_manager == ADMIN_MANAGER:
+        half_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE cardio_mode=? AND id>?", (HALF_WEEK,last_admin_loginid,))
+    else:
+        half_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? AND id>?", (current_account_manager,HALF_WEEK,last_admin_loginid,))
+    half_week_cardio_members_data=half_week_cardio_cursor_members.fetchall()
+    conn_members.close()
+
+    # Process member data
+    merged_data={}
+    # (1) full week male member data
+    for month, count in full_week_male_members_data:
+        merged_data[month]={'full_week_male': count * 200}
+    # (2) half week male member data
+    for month, count in half_week_male_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['half_week_male'] = count * 100
+        else:
+            merged_data[month]={'half_week_male': count * 100}
+    # (3) full week female member data
+    for month, count in full_week_female_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['full_week_female'] = count * 200
+        else:
+            merged_data[month]={'full_week_female': count * 200}
+    # (4) half week female member data
+    for month, count in half_week_female_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['half_week_female'] = count * 100
+        else:
+            merged_data[month]={'half_week_female': count * 100}
+    # (5) full week cardio member data
+    for month, count in full_week_cardio_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['full_week_cardio'] = count * 300
+        else:
+            merged_data[month]={'full_week_female': count * 300}
+    # (6) half week cardio member data
+    for month, count in half_week_cardio_members_data:
+        if month in merged_data.keys():
+            merged_data[month]['half_week_cardio'] = count * 150
+        else:
+            merged_data[month]={'half_week_cardio': count * 150}
+    # Extract month labels and total member incomes
+    print('merged_data: {}'.format(merged_data))
+    if merged_data is {}:
+        return
+    months, member_incomes=zip(
+        *[(month, sum(data.values())) for month, data in merged_data.items()])
+
+    # Convert months to a NumPy array with a specific data type (e.g., float)
+    months_array=np.array(months, dtype=str)
+
+    # Plot the monthly income report with inverted colors
+    ax.clear()
+    members_bar=ax.bar(months_array, member_incomes, color='green', alpha=0.7, label='Members')
+    ax.set_ylabel('Income (EGP)')
+
+    # Update the title based on the current month
+    ax.set_title(
+        f'Monthly Income Report ({calendar.month_name[int(current_month.split("-")[1])]} {current_month.split("-")[0]})')
+
+    # Show legend
+    ax.legend()
+
+    # Annotate each bar with the total income value
+    for bar, members_income in zip(members_bar, member_incomes):
+        ax.text(bar.get_x() + bar.get_width() / 2, members_income,
+                f'{members_income} EGP', ha='center', va='bottom', color='black', fontweight='bold')
+
+    ax.grid(True)
+
+    # Redraw the canvas
+    canvas.draw()
+
+    # Schedule the next update
+    root.after(1000, update_daily_report, root, ax, canvas)
     #root.resizable(True, True)
 
 
@@ -1282,6 +1441,8 @@ class RegistrationFrame(ctk.CTkFrame):
         cursor=conn.cursor()
 
         # Format the date to include only the date part
+        if self.start_date is None:
+            self.start_date = datetime.now()
         start_date_str=self.start_date.strftime('%Y-%m-%d')
         end_date_str=self.end_date.strftime('%Y-%m-%d')
 
@@ -6034,6 +6195,50 @@ def forgot_password():
             messagebox.showerror('Invalid Phone Number',
                                  'Please enter a valid phone number starting with 0 and 12 digits long (e.g., 201054647534).')
 
+def get_last_member_id():
+    last_member_id = -1
+    try:
+        conn=sqlite3.connect('SQLite db/registration_form.db')
+        cursor=conn.cursor()
+        cursor.execute('''SELECT max(id) from registration''')
+        conn.commit()
+        cur_list = cursor.fetchall()
+        last_member_id = cur_list[0][0] if len(cur_list)>0 else -1
+    except Exception as e:
+        messagebox.showerror("failed to bring last id")
+    finally:
+        conn.close()
+    print('last member id: {}'.format(last_member_id))
+    return int(last_member_id)
+
+def get_last_admin_login_id():
+    last_admin_login_id = -1
+    try:
+        conn=sqlite3.connect('SQLite db/admin_login.db')
+        cursor=conn.cursor()
+        cursor.execute('''SELECT max(last_id) from admin''')
+        conn.commit()
+        cur_list = cursor.fetchall()
+        last_admin_login_id = cur_list[0][0]
+    except Exception as e:
+        messagebox.showerror("failed to retrieve last admin login id")
+    finally:
+        conn.close()
+    print('last admin login id: {}'.format(last_admin_login_id))
+    return int(last_admin_login_id)
+
+def admin_logedin():
+    try:
+        last_id = get_last_member_id()
+        conn=sqlite3.connect('SQLite db/admin_login.db')
+        cursor=conn.cursor()
+        cursor.execute('''INSERT INTO admin (last_id) values (?)
+        ''', (str(int(last_id)),))
+        conn.commit()
+    except Exception as e:
+        messagebox.showerror("Failed to insert last member id")
+    finally:
+        conn.close()
 
 # Create the login system
 def create_login_window():
@@ -6046,7 +6251,6 @@ def create_login_window():
         if username == "" or password == "":
             messagebox.showerror(title="Login Failed", message="Please enter both username and password")
             return
-
         # Connect to SQLite database
         conn=sqlite3.connect('SQLite db/registered_users.db')
         cursor=conn.cursor()

@@ -12,7 +12,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from tkinter import messagebox, simpledialog, ttk
-from consts import ADMIN_MANAGER
+from consts import ADMIN_MANAGER, ADMIN_NO
 
 # Connect to SQLite database
 try:
@@ -28,7 +28,6 @@ try:
     password TEXT NOT NULL
     )
     ''')
-
     cursor.execute('''INSERT INTO accounts (full_name, contact_no, username, password) values (?,?,?,?)
     ''', (ADMIN_MANAGER, ADMIN_NO, 'Admin', 'Admin@gym'))
     conn.commit()
@@ -222,3 +221,23 @@ time_out TEXT
 ''')
 conn.commit()
 conn.close()
+
+# Connect to SQLite database
+try:
+    conn=sqlite3.connect('SQLite db/admin_login.db')
+    cursor=conn.cursor()
+    # Create admin table if it doesn't exist
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS admin (
+    id INTEGER PRIMARY KEY,
+    last_id INTEGER
+    )
+    ''')
+    cursor.execute('''INSERT INTO admin (last_id) values (?)
+    ''', ('-1',))
+    conn.commit()
+except Exception as e:
+    print("Error:", e)
+    messagebox.showerror("Registration Error", "An error occurred during registration.")
+finally:
+    conn.close()
