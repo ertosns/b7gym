@@ -23,6 +23,7 @@ from tkinter import filedialog, PhotoImage
 import pywhatkit as kit
 from alright import WhatsApp
 from consts import *
+from utils import *
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
@@ -598,12 +599,7 @@ def create_home_frame(home):
 
     panel_frame.grid_rowconfigure(0, weight=1)
 
-
-# Graph
-def update_income_report(root, ax, canvas):
-    # pass
-    current_month=datetime.now().strftime('%Y-%m')
-
+def period_income_report(current_month, merged_data, period, last_admin_loginid=-1):
     # Connect to the members database
     conn_members=sqlite3.connect('SQLite db/registration_form.db')
     # Retrieve monthly member count
@@ -611,84 +607,115 @@ def update_income_report(root, ax, canvas):
     full_week_male_cursor_members=conn_members.cursor()
     # full-week mode
     if current_account_manager == ADMIN_MANAGER:
-        full_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (MALE,FULL_WEEK,))
+        full_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND subscription_period=? AND id>? GROUP BY month", (MALE,FULL_WEEK,period,last_admin_loginid,))
     else:
-        full_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,MALE,FULL_WEEK,))
+        full_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND subscription_period=?  AND id>?  GROUP BY month", (current_account_manager,MALE,FULL_WEEK,period,last_admin_loginid,))
     full_week_male_members_data=full_week_male_cursor_members.fetchall()
     # half-week mode
     half_week_male_cursor_members=conn_members.cursor()
     if current_account_manager == ADMIN_MANAGER:
-        half_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (MALE,HALF_WEEK,))
+        half_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND subscription_period=?  AND id>? GROUP BY month", (MALE,HALF_WEEK,period,last_admin_loginid,))
     else:
-        half_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,MALE,HALF_WEEK,))
+        half_week_male_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND subscription_period=?  AND id>? GROUP BY month", (current_account_manager,MALE,HALF_WEEK,period,last_admin_loginid,))
     half_week_male_members_data=half_week_male_cursor_members.fetchall()
     #
     # Retrieve Female counts
     # full_week mode
     full_week_female_cursor_members=conn_members.cursor()
     if current_account_manager == ADMIN_MANAGER:
-        full_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (FEMALE,FULL_WEEK,))
+        full_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND subscription_period=?  AND id>? GROUP BY month", (FEMALE,FULL_WEEK,period,last_admin_loginid,))
     else:
-        full_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,FEMALE,FULL_WEEK,))
+        full_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND subscription_period=?  AND id>? GROUP BY month", (current_account_manager,FEMALE,FULL_WEEK,period,last_admin_loginid,))
     full_week_female_members_data=full_week_female_cursor_members.fetchall()
     # half week mode
     half_week_female_cursor_members=conn_members.cursor()
     if current_account_manager == ADMIN_MANAGER:
-        half_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? GROUP BY month", (FEMALE,HALF_WEEK,))
+        half_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND subscription_period=?  AND id>? GROUP BY month", (FEMALE,HALF_WEEK,period,last_admin_loginid,))
     else:
-        half_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? GROUP BY month", (current_account_manager,FEMALE,HALF_WEEK,))
+        half_week_female_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND subscription_period=?  AND id>? GROUP BY month", (current_account_manager,FEMALE,HALF_WEEK,period,last_admin_loginid,))
     half_week_female_members_data=half_week_female_cursor_members.fetchall()
     # full-week cardio
     full_week_cardio_cursor_members=conn_members.cursor()
     if current_account_manager == ADMIN_MANAGER:
-        full_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE cardio_mode=? GROUP BY month", (FULL_WEEK,))
+        full_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE cardio_mode=? AND subscription_period=?  AND id>? GROUP BY month", (FULL_WEEK,period,last_admin_loginid,))
     else:
-        full_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? GROUP BY month", (current_account_manager, FULL_WEEK,))
+        full_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? AND subscription_period=?  AND id>? GROUP BY month", (current_account_manager, FULL_WEEK,period,last_admin_loginid,))
     full_week_cardio_members_data=full_week_cardio_cursor_members.fetchall()
     # half week cardio
     half_week_cardio_cursor_members=conn_members.cursor()
     if current_account_manager == ADMIN_MANAGER:
-        half_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE cardio_mode=? GROUP BY month", (HALF_WEEK,))
+        half_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE cardio_mode=? AND subscription_period=?  AND id>? GROUP BY month", (HALF_WEEK,period,last_admin_loginid,))
     else:
-        half_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? GROUP BY month", (current_account_manager,HALF_WEEK,))
+        half_week_cardio_cursor_members.execute("SELECT strftime('%Y-%m', start_date) as month, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? AND subscription_period=?  AND id>? GROUP BY month", (current_account_manager,HALF_WEEK,period,last_admin_loginid,))
     half_week_cardio_members_data=half_week_cardio_cursor_members.fetchall()
     conn_members.close()
 
-    # Process member data
-    merged_data={}
     # (1) full week male member data
     for month, count in full_week_male_members_data:
-        merged_data[month]={'full_week_male': count * 200}
+        price = get_price(period, count, FULL_WEEK, NO_CARDIO)
+        if price==CANT_GET_PRICE:
+            return
+        if month in merged_data.keys():
+            merged_data[month]['full_week_male'+'_'+str(period)] = price
+        else:
+            merged_data[month]={'full_week_male'+'_'+str(period): price}
     # (2) half week male member data
     for month, count in half_week_male_members_data:
+        price = get_price(period, count, HALF_WEEK, NO_CARDIO)
+        if price==CANT_GET_PRICE:
+            return
         if month in merged_data.keys():
-            merged_data[month]['half_week_male'] = count * 100
+            merged_data[month]['half_week_male'+'_'+str(period)] = price
         else:
-            merged_data[month]={'half_week_male': count * 100}
+            merged_data[month]={'half_week_male'+'_'+str(period): price}
     # (3) full week female member data
     for month, count in full_week_female_members_data:
+        price = get_price(period, count, FULL_WEEK, NO_CARDIO)
+        if price==CANT_GET_PRICE:
+            return
         if month in merged_data.keys():
-            merged_data[month]['full_week_female'] = count * 200
+            merged_data[month]['full_week_female'+'_'+str(period)] = price
         else:
-            merged_data[month]={'full_week_female': count * 200}
+            merged_data[month]={'full_week_female'+'_'+str(period): price}
     # (4) half week female member data
     for month, count in half_week_female_members_data:
+        price = get_price(period, count, HALF_WEEK, NO_CARDIO)
+        if price==CANT_GET_PRICE:
+            return
         if month in merged_data.keys():
-            merged_data[month]['half_week_female'] = count * 100
+            merged_data[month]['half_week_female'+'_'+str(period)] = price
         else:
-            merged_data[month]={'half_week_female': count * 100}
+            merged_data[month]={'half_week_female'+'_'+str(period): price}
     # (5) full week cardio member data
     for month, count in full_week_cardio_members_data:
+        price = get_price(period, count, NO_BODYBUILDING, FULL_WEEK)
+        if price==CANT_GET_PRICE:
+            return
         if month in merged_data.keys():
-            merged_data[month]['full_week_cardio'] = count * 300
+            merged_data[month]['full_week_cardio'+'_'+str(period)] = price
         else:
-            merged_data[month]={'full_week_female': count * 300}
+            merged_data[month]={'full_week_female'+'_'+str(period): price}
     # (6) half week cardio member data
     for month, count in half_week_cardio_members_data:
+        price = get_price(period, count, NO_BODYBUILDING, HALF_WEEK)
+        if price==CANT_GET_PRICE:
+            return
         if month in merged_data.keys():
-            merged_data[month]['half_week_cardio'] = count * 150
+            merged_data[month]['half_week_cardio'+'_'+str(period)] = price
         else:
-            merged_data[month]={'half_week_cardio': count * 150}
+            merged_data[month]={'half_week_cardio'+'_'+str(period): price}
+    return merged_data
+
+# Graph
+def update_income_report(root, ax, canvas):
+    # pass
+    current_month=datetime.now().strftime('%Y-%m')
+    # Process member data
+    merged_data={}
+    merged_data = period_income_report(current_month, merged_data, MONTHLY)
+    merged_data = period_income_report(current_month, merged_data, THREE_MONTHS)
+    merged_data = period_income_report(current_month, merged_data, SIX_MONTHS)
+    merged_data = period_income_report(current_month, merged_data, YEARLY)
     # Extract month labels and total member incomes
     print('merged_data: {}'.format(merged_data))
     if merged_data is {}:
@@ -734,94 +761,13 @@ def update_daily_report(root, ax, canvas):
     '''
     last_admin_loginid = get_last_admin_login_id()
     current_month=datetime.now().strftime('%Y-%m')
-    # Connect to the members database
-    conn_members=sqlite3.connect('SQLite db/registration_form.db')
-    # Retrieve monthly member count
-    # Retrieve male counts
-    full_week_male_cursor_members=conn_members.cursor()
-    # full-week mode
-    if current_account_manager == ADMIN_MANAGER:
-        full_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (MALE,FULL_WEEK,last_admin_loginid,))
-    else:
-        full_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,MALE,FULL_WEEK,last_admin_loginid,))
-    full_week_male_members_data=full_week_male_cursor_members.fetchall()
-    # half-week mode
-    half_week_male_cursor_members=conn_members.cursor()
-    if current_account_manager == ADMIN_MANAGER:
-        half_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (MALE,HALF_WEEK,last_admin_loginid,))
-    else:
-        half_week_male_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,MALE,HALF_WEEK,last_admin_loginid,))
-    half_week_male_members_data=half_week_male_cursor_members.fetchall()
-    #
-    # Retrieve Female counts
-    # full_week mode
-    full_week_female_cursor_members=conn_members.cursor()
-    if current_account_manager == ADMIN_MANAGER:
-        full_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (FEMALE,FULL_WEEK,last_admin_loginid,))
-    else:
-        full_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,FEMALE,FULL_WEEK,last_admin_loginid,))
-    full_week_female_members_data=full_week_female_cursor_members.fetchall()
-    # half week mode
-    half_week_female_cursor_members=conn_members.cursor()
-    if current_account_manager == ADMIN_MANAGER:
-        half_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE sex=? AND week_mode=? AND id>?", (FEMALE,HALF_WEEK,last_admin_loginid,))
-    else:
-        half_week_female_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND sex=? AND week_mode=? AND id>?", (current_account_manager,FEMALE,HALF_WEEK,last_admin_loginid,))
-    half_week_female_members_data=half_week_female_cursor_members.fetchall()
-    # full-week cardio
-    full_week_cardio_cursor_members=conn_members.cursor()
-    if current_account_manager == ADMIN_MANAGER:
-        full_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE cardio_mode=? AND id>?", (FULL_WEEK,last_admin_loginid,))
-    else:
-        full_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? AND id>?", (current_account_manager, FULL_WEEK,last_admin_loginid,))
-    full_week_cardio_members_data=full_week_cardio_cursor_members.fetchall()
-    # half week cardio
-    half_week_cardio_cursor_members=conn_members.cursor()
-    if current_account_manager == ADMIN_MANAGER:
-        half_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE cardio_mode=? AND id>?", (HALF_WEEK,last_admin_loginid,))
-    else:
-        half_week_cardio_cursor_members.execute("SELECT start_date, COUNT(*) FROM registration WHERE full_name=? AND cardio_mode=? AND id>?", (current_account_manager,HALF_WEEK,last_admin_loginid,))
-    half_week_cardio_members_data=half_week_cardio_cursor_members.fetchall()
-    conn_members.close()
-
-    # Process member data
-    merged_data={}
-    # (1) full week male member data
-    for month, count in full_week_male_members_data:
-        merged_data[month]={'full_week_male': count * 200}
-    # (2) half week male member data
-    for month, count in half_week_male_members_data:
-        if month in merged_data.keys():
-            merged_data[month]['half_week_male'] = count * 100
-        else:
-            merged_data[month]={'half_week_male': count * 100}
-    # (3) full week female member data
-    for month, count in full_week_female_members_data:
-        if month in merged_data.keys():
-            merged_data[month]['full_week_female'] = count * 200
-        else:
-            merged_data[month]={'full_week_female': count * 200}
-    # (4) half week female member data
-    for month, count in half_week_female_members_data:
-        if month in merged_data.keys():
-            merged_data[month]['half_week_female'] = count * 100
-        else:
-            merged_data[month]={'half_week_female': count * 100}
-    # (5) full week cardio member data
-    for month, count in full_week_cardio_members_data:
-        if month in merged_data.keys():
-            merged_data[month]['full_week_cardio'] = count * 300
-        else:
-            merged_data[month]={'full_week_female': count * 300}
-    # (6) half week cardio member data
-    for month, count in half_week_cardio_members_data:
-        if month in merged_data.keys():
-            merged_data[month]['half_week_cardio'] = count * 150
-        else:
-            merged_data[month]={'half_week_cardio': count * 150}
-    # Extract month labels and total member incomes
+    merged_data = {}
+    merged_data = period_income_report(current_month, merged_data, MONTHLY, last_admin_loginid)
+    merged_data = period_income_report(current_month, merged_data, THREE_MONTHS, last_admin_loginid)
+    merged_data = period_income_report(current_month, merged_data, SIX_MONTHS, last_admin_loginid)
+    merged_data = period_income_report(current_month, merged_data, YEARLY, last_admin_loginid)
     print('merged_data: {}'.format(merged_data))
-    if merged_data is {}:
+    if merged_data is {} or len(merged_data.items())==0:
         return
     months, member_incomes=zip(
         *[(month, sum(data.values())) for month, data in merged_data.items()])
