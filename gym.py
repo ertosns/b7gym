@@ -1088,7 +1088,10 @@ class RegistrationFrame(ctk.CTkFrame):
             cursor.execute('SELECT full_name FROM accounts')
             cur_list = cursor.fetchall()
             # exclude admin which is located at position 0
-            account_manager_options = [i[0] for i in cur_list[1:]]
+            temp_options = [i[0] for i in cur_list[1:]]
+            for temp in temp_options:
+                if temp not in account_manager_options:
+                    account_manager_options+=[temp]
 
         except Exception as e:
             print("Error: ", e)
