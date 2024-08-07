@@ -1350,6 +1350,22 @@ class RegistrationFrame(ctk.CTkFrame):
         first_name=self.first_name_entry.get()
         middle_name=self.middle_name_entry.get()
         last_name=self.last_name_entry.get()
+        # at this point verify that there is no user exists with that name between memebers or gymers.
+        try:
+            conn=sqlite3.connect('SQLite db/registration_form.db')
+            cursor=conn.cursor()
+            cursor.execute('''
+            SELECT * FROM registration WHERE first_name=? AND middle_name=? AND last_name=? COLLATE NOCASE
+            ''',(first_name, middle_name, last_name,))
+            conn.commit()
+            duplicates = cursor.fetchall()
+            if len(duplicates)>0:
+                messagebox.showerror("Validation Error", "Client is already a member.")
+                return
+        except Exception as e:
+            messagebox.showerror("Validation Error", e)
+        finally:
+            conn.close()
         age=self.age_entry.get()
         sex=self.sex_entry.get()
         birth_date=self.birth_date_entry.get()
