@@ -1,6 +1,8 @@
 from tkinter import messagebox
 
+# errno
 CANT_GET_PRICE = -1
+# sqlite database
 NO_BODYBUILDING = "No-Bodybuilding"
 FULL_WEEK = "Full-Week"
 HALF_WEEK = "Half-Week"
@@ -13,10 +15,13 @@ ADMIN_MANAGER = "1"
 ADMIN_NO = "0"
 MALE = "Male"
 FEMALE = "Female"
-REGISTRATION_PHOTO_IDX = 13
+# indices
 MONTHLY_DISCOUNT = 0
 THREE_MONTHS_DISCOUNT = 0.05
 SIX_MONTHS_DISCOUNT = 0.1
 YEARLY_DISCOUNT = 0.15
+# cost
 FULL_WEEK_COST = 200
 HALF_WEEK_COST = 100
+#database idices
+REGISTRATION_PHOTO_IDX = 13

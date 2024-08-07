@@ -35,19 +35,29 @@ account_manager_options = []
 def send_whats_msg(to_phone_number, message):
     print("sending message to {}".format(to_phone_number))
     # redefine messenger everytime just in case the browser is crashed.
-    messenger = WhatsApp()
-    messenger.find_user(to_phone_number)
-    messenger.send_message(message)
-    #messenger.wait_until_message_successfully_sent()
-    messenger.close_when_message_successfully_sent()
-    print("message sent successfully")
+    try:
+        messenger = WhatsApp()
+        messenger.find_user(to_phone_number)
+        messenger.send_message(message)
+        #messenger.wait_until_message_successfully_sent()
+        messenger.close_when_message_successfully_sent()
+        print("message sent successfully")
+        return True
+    except Exception as e:
+        messagebox.showinfo("Whats Message", e)
+    return False
 
 def send_whats_img(to_phone_number, img_path):
     print("sending picture to {} at path: {}".format(to_phone_number, img_path))
-    messenger = WhatsApp()
-    messenger.find_user(to_phone_number)
-    messenger.send_picture(img_path)
-    print("picture sent successfully")
+    try:
+        messenger = WhatsApp()
+        messenger.find_user(to_phone_number)
+        messenger.send_picture(img_path)
+        print("picture sent successfully")
+        return True
+    except Exception as e:
+        messagebox.showinfo("Whats Message", e)
+    return False
 
 def change_appearance_mode_event(new_appearance_mode):
     ctk.set_appearance_mode(new_appearance_mode)
@@ -1458,8 +1468,16 @@ class RegistrationFrame(ctk.CTkFrame):
         cardio_msg = f" Cardio mode: {cardio_mode}, " if cardio_mode!=NO_CARDIO else ''
         outro_msg =  " - B7 GYM"
         sms_message = intro_msg +  bodybuilding_msg  + cardio_msg  + outro_msg
-        send_whats_msg(formatted_contact_no, sms_message)
-        send_whats_img(formatted_contact_no, file_path)
+        sent = send_whats_msg(formatted_contact_no, sms_message)
+        sent = sent & send_whats_img(formatted_contact_no, file_path)
+        if sent:
+            with sqlite3.connect('SQLite db/registration_form.db') as conn:
+                cursor=conn.cursor()
+                cursor.execute('''
+                UPDATE registration
+                SET notified_for_subscription = True
+                WHERE first_name=? AND middle_name=? AND last_name=?
+                ''', (first_name, middle_name, last_name,))
 
         # Show a success message
         messagebox.showinfo("Registration Successful", "User registered successfully!")

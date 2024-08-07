@@ -63,6 +63,15 @@ with sqlite3.connect('SQLite db/registration_form.db') as conn:
     full_name REFERENCES accounts(full_name)
     )
     ''')
+
+with sqlite3.connect('SQLite db/registration_form.db') as conn:
+    cursor=conn.cursor()
+    cursor.execute('''
+    ALTER TABLE registration ADD notified_for_subscription BOOLEAN DEFAULT FALSE;
+    ''')
+    cursor.execute('''
+    ALTER TABLE registration ADD notified_for_expiration BOOLEAN DEFAULT FALSE;
+    ''')
 # Create attendance record sqlite database if it doesn't exist
 conn=sqlite3.connect('SQLite db/attendance_records.db')
 cursor=conn.cursor()
